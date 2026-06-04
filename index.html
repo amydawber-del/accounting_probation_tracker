@@ -998,21 +998,18 @@ async function submitToAppsScript() {
     showStatus('Please enter the new starter name before saving.', 'error');
     return;
   }
-  showStatus('Saving to Sheets and generating Word doc...', 'info');
+  showStatus('Saving to Sheets and generating Word doc — this may take a few seconds...', 'info');
   try {
-    const resp = await fetch(url, {
+    const formBody = 'payload=' + encodeURIComponent(JSON.stringify({ action: 'saveAssessment', data }));
+    await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({ action: 'saveAssessment', data }),
-      headers: { 'Content-Type': 'application/json' }
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formBody
     });
-    const result = await resp.json();
-    if (result.success) {
-      showStatus('✓ Saved to Sheets! ' + (result.docUrl ? `<a href="${result.docUrl}" target="_blank" style="color:var(--pass); font-weight:600;">Download Word doc →</a>` : ''), 'success');
-    } else {
-      showStatus('Error: ' + (result.error || 'Unknown error from Apps Script.'), 'error');
-    }
+    showStatus('✓ Submitted! Check your Google Sheet and Drive folder for the record and Word doc. <a href="https://drive.google.com" target="_blank" style="color:var(--pass); font-weight:600;">Open Drive →</a>', 'success');
   } catch (e) {
-    showStatus('Could not connect to Apps Script. Check your URL and that the deployment is set to "Anyone".', 'error');
+    showStatus('Could not reach Apps Script. Check the URL is correct and deployed as "Anyone".', 'error');
   }
 }
 
