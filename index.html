@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Accounting Probation Sign-off Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brand: #1a1a2e;
+    --brand-mid: #16213e;
+    --accent: #e94560;
+    --accent-light: #fff0f3;
+    --stage1: #0f3460;
+    --stage1-light: #e8f0fe;
+    --stage2: #533483;
+    --stage2-light: #f0ebff;
+    --pass: #1a7a4a;
+    --pass-bg: #e8f7ef;
+    --revisit: #b45309;
+    --revisit-bg: #fef3c7;
+    --fail: #be123c;
+    --fail-bg: #ffe4e6;
+    --border: #e2e8f0;
+    --surface: #f8fafc;
+    --text: #1e293b;
+    --muted: #64748b;
+    --white: #ffffff;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f1f5f9;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    background: var(--brand);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .page-header .logo {
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .page-header h1 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .page-header p {
+    font-size: 12px;
+    opacity: 0.65;
+    margin-top: 2px;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-header.section-header {
+    background: var(--brand);
+    color: white;
+  }
+  .card-header h2 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .card-header .section-num {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .card-body { padding: 1.25rem; }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 600px) { .meta-grid { grid-template-columns: 1fr; } }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+  .field-group input:focus,
+  .field-group select:focus,
+  .field-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(233,69,96,0.1);
+    background: white;
+  }
+  .field-group textarea { resize: vertical; min-height: 60px; }
+
+  /* Two-stage scoring section */
+  .stage-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 0;
+  }
+  .stage-tab {
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stage-tab .stage-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+  }
+  .stage-tab.active[data-stage="1"] {
+    color: var(--stage1);
+    border-bottom-color: var(--stage1);
+  }
+  .stage-tab.active[data-stage="1"] .stage-dot { opacity: 1; }
+  .stage-tab.active[data-stage="2"] {
+    color: var(--stage2);
+    border-bottom-color: var(--stage2);
+  }
+  .stage-tab.active[data-stage="2"] .stage-dot { opacity: 1; }
+
+  .stage-panel { display: none; }
+  .stage-panel.active { display: block; }
+
+  .stage-panel-header {
+    padding: 10px 1.25rem;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .stage-panel-header.s1 { background: var(--stage1-light); color: var(--stage1); }
+  .stage-panel-header.s2 { background: var(--stage2-light); color: var(--stage2); }
+
+  .criteria-list { padding: 0.75rem 1.25rem; }
+  .criterion-row {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .criterion-top {
+    display: grid;
+    grid-template-columns: 1fr 170px;
+    gap: 0;
+  }
+  .criterion-question {
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-right: 1px solid var(--border);
+  }
+  .criterion-question .what5 {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 3px;
+    font-style: italic;
+  }
+  .score-picker {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    justify-content: center;
+    background: var(--surface);
+    min-width: 0;
+  }
+  .score-picker label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .score-buttons {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .score-btn {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .score-btn.selected-1 { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+  .score-btn.selected-2 { background: #ffedd5; border-color: #f97316; color: #c2410c; }
+  .score-btn.selected-3 { background: #fef9c3; border-color: #eab308; color: #854d0e; }
+  .score-btn.selected-4 { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+  .score-btn.selected-5 { background: #d1fae5; border-color: #10b981; color: #065f46; }
+
+  .criterion-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--border);
+  }
+  .criterion-field {
+    padding: 8px 12px;
+  }
+  .criterion-field:first-child { border-right: 1px solid var(--border); }
+  .criterion-field label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .criterion-field textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    resize: vertical;
+    min-height: 44px;
+  }
+  .criterion-field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: white;
+  }
+
+  /* Stage summary bar */
+  .stage-summary {
+    padding: 10px 1.25rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+  .summary-field { display: flex; flex-direction: column; gap: 4px; }
+  .summary-field label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .avg-display {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .avg-display.good { color: var(--pass); }
+  .avg-display.warn { color: var(--revisit); }
+  .avg-display.bad { color: var(--fail); }
+
+  .outcome-select select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+    width: 100%;
+  }
+  .outcome-select select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .outcome-select select.signed { background: var(--pass-bg); color: var(--pass); border-color: #86efac; }
+  .outcome-select select.revisit { background: var(--revisit-bg); color: var(--revisit); border-color: #fcd34d; }
+  .outcome-select select.notyet { background: var(--fail-bg); color: var(--fail); border-color: #fca5a5; }
+
+  .sign-off-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  /* Summary section */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .summary-table th {
+    background: var(--surface);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .summary-table tr:last-child td { border-bottom: none; }
+  .summary-table .call-name { font-weight: 500; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge.signed { background: var(--pass-bg); color: var(--pass); }
+  .badge.revisit { background: var(--revisit-bg); color: var(--revisit); }
+  .badge.notyet { background: var(--fail-bg); color: var(--fail); }
+  .badge.pending { background: #f1f5f9; color: var(--muted); }
+
+  /* Final recommendation */
+  .recommendation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 1.25rem;
+  }
+  .recommendation-grid .full-width { grid-column: 1 / -1; }
+  .rec-btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .rec-btn {
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .rec-btn:hover { border-color: var(--accent); color: var(--text); }
+  .rec-btn.selected-signoff { background: var(--pass-bg); border-color: #86efac; color: var(--pass); }
+  .rec-btn.selected-extend { background: var(--revisit-bg); border-color: #fcd34d; color: var(--revisit); }
+  .rec-btn.selected-reassess { background: var(--fail-bg); border-color: #fca5a5; color: var(--fail); }
+
+  /* Action buttons */
+  .actions-bar {
+    display: flex;
+    gap: 10px;
+    padding: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 20px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary {
+    background: var(--brand);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--brand-mid); }
+  .btn-secondary {
+    background: white;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--surface); }
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-accent:hover { opacity: 0.9; }
+
+  .status-msg {
+    padding: 10px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    display: none;
+  }
+  .status-msg.success { background: var(--pass-bg); color: var(--pass); border: 1px solid #86efac; }
+  .status-msg.error { background: var(--fail-bg); color: var(--fail); border: 1px solid #fca5a5; }
+  .status-msg.info { background: var(--stage1-light); color: var(--stage1); border: 1px solid #93c5fd; }
+
+  .apps-script-setup {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .apps-script-setup code {
+    background: #334155;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 11px;
+    color: #7dd3fc;
+  }
+  .apps-script-setup .setup-url {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: #7dd3fc;
+    font-family: monospace;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .apps-script-setup .setup-url:focus {
+    outline: none;
+    border-color: #60a5fa;
+  }
+
+  .scoring-guide {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 1rem 1.25rem;
+  }
+  .score-guide-item {
+    border-radius: 7px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .score-guide-item .num { font-size: 18px; font-weight: 700; }
+  .score-guide-item .label { font-size: 10px; font-weight: 600; margin: 2px 0; text-transform: uppercase; letter-spacing: 0.04em; }
+  .score-guide-item .desc { font-size: 10px; line-height: 1.4; }
+  .sg1 { background: #fee2e2; color: #b91c1c; }
+  .sg2 { background: #ffedd5; color: #c2410c; }
+  .sg3 { background: #fef9c3; color: #854d0e; }
+  .sg4 { background: #dcfce7; color: #15803d; }
+  .sg5 { background: #d1fae5; color: #065f46; }
+
+  @media (max-width: 600px) {
+    .criterion-top { grid-template-columns: 1fr; }
+    .criterion-question { border-right: none; border-bottom: 1px solid var(--border); }
+    .criterion-bottom { grid-template-columns: 1fr; }
+    .criterion-field:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+    .sign-off-fields { grid-template-columns: 1fr; }
+    .scoring-guide { grid-template-columns: 1fr; }
+    .recommendation-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <div class="logo">Street</div>
+  </div>
+  <div>
+    <h1>Accounting Probation Sign-off Tracker</h1>
+    <p>Two-stage assessment — demo, onboarding, opening balance &amp; first import calls</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Apps Script Setup -->
+  <div class="card" id="setup-card">
+    <div class="card-header">
+      <span style="font-size:16px">⚙️</span>
+      <h2>Apps Script setup (one-time)</h2>
+      <button onclick="document.getElementById('setup-card').style.display='none'" style="margin-left:auto; background:none; border:none; cursor:pointer; color:var(--muted); font-size:18px; line-height:1;">×</button>
+    </div>
+    <div class="apps-script-setup card-body">
+      <p style="margin-bottom:12px;">Paste your Google Apps Script web app URL below to enable saving to Sheets + generating a Word doc. See the <code>Code.gs</code> file included with this tracker for the full script.</p>
+      <input type="url" class="setup-url" id="scriptUrl" placeholder="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec" />
+      <p style="margin-top:10px; color:#94a3b8;">Your URL is saved locally in your browser — it never leaves your machine except to call your own Apps Script.</p>
+    </div>
+  </div>
+
+  <!-- Header info -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Assessment details</h2>
+    </div>
+    <div class="card-body">
+      <div class="meta-grid">
+        <div class="field-group">
+          <label>New starter name</label>
+          <input type="text" id="starterName" placeholder="e.g. Max Taylor" />
+        </div>
+        <div class="field-group">
+          <label>Assessor</label>
+          <select id="assessor">
+            <option value="">Select assessor</option>
+            <option value="Amy">Amy</option>
+            <option value="Max">Max</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Probation checkpoint</label>
+          <select id="checkpoint">
+            <option value="">Select checkpoint</option>
+            <option value="30 day">30 day</option>
+            <option value="60 day">60 day</option>
+            <option value="90 day">90 day</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Call type assessed</label>
+          <select id="callTypeHeader">
+            <option value="">Select call type</option>
+            <option value="Intro to Onboarding Accounting">Intro to Onboarding Accounting</option>
+            <option value="Accounting Demo">Accounting Demo</option>
+            <option value="Opening Balance">Opening Balance</option>
+            <option value="First Import">First Import</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Client / demo scenario</label>
+          <input type="text" id="clientScenario" placeholder="e.g. Gascoigne Halman or mock call" />
+        </div>
+        <div class="field-group">
+          <label>Recording / link</label>
+          <input type="url" id="recordingLink" placeholder="https://..." />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoring guide -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Scoring guide</h2>
+    </div>
+    <div class="scoring-guide">
+      <div class="score-guide-item sg1"><div class="num">1</div><div class="label">Not demonstrated</div><div class="desc">Needs full support. Key parts missing or incorrect.</div></div>
+      <div class="score-guide-item sg2"><div class="num">2</div><div class="label">Needs development</div><div class="desc">Some awareness shown, patchy or needs frequent prompts.</div></div>
+      <div class="score-guide-item sg3"><div class="num">3</div><div class="label">Working towards</div><div class="desc">Covers basics but still needs support or structure.</div></div>
+      <div class="score-guide-item sg4"><div class="num">4</div><div class="label">Strong / mostly independent</div><div class="desc">Clear and accurate. Minor polish only.</div></div>
+      <div class="score-guide-item sg5"><div class="num">5</div><div class="label">Sign-off ready</div><div class="desc">Confident, client-ready. Handles questions, links to value.</div></div>
+    </div>
+  </div>
+
+  <!-- Call sections -->
+  <div id="sections-container"></div>
+
+  <!-- Overall summary -->
+  <div class="card">
+    <div class="card-header section-header">
+      <div class="section-num">★</div>
+      <h2>Overall probation sign-off summary</h2>
+    </div>
+    <div class="card-body" style="padding:0; overflow-x:auto;">
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Call area</th>
+            <th>Stage 1 date</th>
+            <th>Stage 1 outcome</th>
+            <th>Final date</th>
+            <th>Final outcome</th>
+            <th>Final avg</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+    </div>
+    <div class="recommendation-grid">
+      <div class="field-group full-width">
+        <label>Final probation recommendation</label>
+        <div class="rec-btn-group">
+          <button class="rec-btn" onclick="selectRec(this, 'signoff')">✓ Sign off</button>
+          <button class="rec-btn" onclick="selectRec(this, 'extend')">⟳ Extend support</button>
+          <button class="rec-btn" onclick="selectRec(this, 'reassess')">↺ Reassess after further shadowing</button>
+        </div>
+        <input type="hidden" id="finalRecommendation" />
+      </div>
+      <div class="field-group full-width">
+        <label>Overall comments</label>
+        <textarea id="overallComments" placeholder="Summary of performance across all call types..."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Support plan agreed</label>
+        <textarea id="supportPlan" placeholder="Any agreed support, shadowing or revisit plan..."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Final review date</label>
+        <input type="date" id="finalReviewDate" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="actions-bar">
+    <button class="btn btn-accent" onclick="submitToAppsScript()">⬆ Save to Sheets &amp; generate Word doc</button>
+    <button class="btn btn-secondary" onclick="printForm()">🖨 Print / save as PDF</button>
+    <button class="btn btn-secondary" onclick="clearForm()">↺ Clear form</button>
+  </div>
+  <div class="status-msg" id="statusMsg"></div>
+
+</div>
+
+<script>
+const CALL_SECTIONS = [
+  {
+    id: 'intro',
+    title: 'Intro to Onboarding Accounting (Street Accounting)',
+    criteria: [
+      { q: 'Did the trainer clearly explain the purpose of Street Accounting onboarding?', w5: 'Clear intro to why the call exists, client expectations, and fit with wider implementation.' },
+      { q: 'Did the trainer set expectations for the full onboarding journey?', w5: 'Explains training, demo practice, data checks, go-live calls, first import and aftercare.' },
+      { q: 'Did the trainer confirm the client\'s current accounting setup and confidence level?', w5: 'Understands current system/process, team roles, experience, pain points and areas needing support.' },
+      { q: 'Did the trainer explain what the client needs to prepare?', w5: 'Clearly outlines required data, training completion, demo practice, reconciled balances, bank info.' },
+      { q: 'Did the trainer explain key risks before go-live?', w5: 'Warns against early receipting/importing, incorrect balances, incomplete data, changes after sign-off.' },
+      { q: 'Did the trainer keep the call structured and easy to follow?', w5: 'Clear agenda, checks understanding, summarises regularly, avoids unnecessary jargon.' },
+      { q: 'Did the trainer clearly outline next steps and responsibilities?', w5: 'Client leaves knowing who owns what, deadlines, next call type and what must be completed.' },
+    ]
+  },
+  {
+    id: 'demo',
+    title: 'Accounting Demo',
+    criteria: [
+      { q: 'Did the trainer clearly explain the purpose of the demo and set expectations?', w5: 'Clear agenda, tailored to lettings/accounting, confirms client goals before starting.' },
+      { q: 'Did the trainer ask how the client currently manages accounting?', w5: 'Understands current setup (e.g. Jupix, spreadsheets), identifies pain points, tailors demo.' },
+      { q: 'Did the trainer demonstrate features relevant to the client\'s workflow?', w5: 'Role-based demo for PM/accounts using real scenarios such as rent, statements and arrears.' },
+      { q: 'Did the trainer clearly explain how Street handles client money, ledgers and allocations?', w5: 'Explains simply where money sits, how it moves, and what triggers entries.' },
+      { q: 'Did the trainer confidently answer questions and address concerns?', w5: 'Clear, correct answers, ties back to workflows, does not avoid tricky questions.' },
+      { q: 'Did the trainer explain how the workflow saves time or reduces risk?', w5: 'Links features to time saved, fewer errors, clearer compliance and better auditability.' },
+      { q: 'Did the trainer clearly outline what happens next?', w5: 'Mentions training, demo practice and the onboarding steps needed before go-live.' },
+      { q: 'Was the trainer clear, structured and easy to follow?', w5: 'Logical flow, calm delivery, good pace, plain English explanations and regular understanding checks.' },
+    ]
+  },
+  {
+    id: 'obcall',
+    title: 'Accounting Opening Balance',
+    criteria: [
+      { q: 'Did the trainer clearly lead the call and explain the steps of the Opening Balance process?', w5: 'Client understands what Opening Balance is, what today covers, and what happens after.' },
+      { q: 'Did the trainer confirm the client is ready before proceeding?', w5: 'Explicitly checks training complete, demo practice done and correct data available.' },
+      { q: 'Did the trainer clearly explain what opening balances are and how they impact accounts?', w5: 'Client understands starting position, accuracy importance and why no changes post go-live.' },
+      { q: 'Did the trainer guide the client through checking balances and ensuring correctness?', w5: 'Encourages validation, does not rush, checks figures carefully and flags risks.' },
+      { q: 'Did the trainer explain how client money is handled and compliance implications?', w5: 'Touches on client account, reconciliation, audit trail and why accuracy matters.' },
+      { q: 'Did the trainer clearly warn about risks, e.g. incorrect balances or early receipting?', w5: 'Explicit warnings given, explained in plain English and acknowledged by the client.' },
+      { q: 'Did the trainer clearly explain the Day 1 / Day 2 go-live process?', w5: 'Client knows exactly what happens next, when, and what they must avoid between calls.' },
+      { q: 'Did the trainer confirm the client feels comfortable before ending the call?', w5: 'Checks understanding, answers final questions and confirms confidence before closing.' },
+      { q: 'Was the trainer clear, structured and easy to follow?', w5: 'Keeps control of the call, explains each step, summarises key points and manages pace.' },
+    ]
+  },
+  {
+    id: 'import',
+    title: 'Accounting First Import',
+    criteria: [
+      { q: 'Did the trainer clearly explain what the import is and what will be reviewed?', w5: 'Sets the purpose of the call, confirms review areas and explains why the import matters.' },
+      { q: 'Did the trainer explain what has been imported and how to interpret it?', w5: 'Client understands what data is, where it came from and what it affects.' },
+      { q: 'Did the trainer identify and explain any issues?', w5: 'Clearly explains duplicates, missing data, formatting problems or unexpected balances.' },
+      { q: 'Did the trainer check the client understands what they are seeing?', w5: 'Regular understanding checks, encourages questions, avoids moving on too quickly.' },
+      { q: 'Did the trainer clearly explain what needs to be corrected before the next step?', w5: 'Specific corrections explained clearly with enough detail for client or Street to action.' },
+      { q: 'Did the trainer clearly assign actions to client vs Street?', w5: 'Actions split cleanly, with owner, expected outcome and deadline where needed.' },
+      { q: 'Did the trainer confirm whether the client is ready for next steps?', w5: 'Gives a clear readiness view and explains whether they can proceed or need a revisit.' },
+      { q: 'Was the trainer clear, structured and easy to follow?', w5: 'Logical call flow, calm explanations, good pacing and clear recap before ending.' },
+    ]
+  }
+];
+
+function buildSections() {
+  const container = document.getElementById('sections-container');
+  CALL_SECTIONS.forEach((section, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-header section-header">
+        <div class="section-num">${idx + 1}</div>
+        <h2>${section.title} — Call Scoring</h2>
+      </div>
+      <div class="stage-tabs">
+        <button class="stage-tab active" data-stage="1" onclick="switchStage('${section.id}', 1, this)">
+          <span class="stage-dot"></span>Stage 1 — Initial competence
+        </button>
+        <button class="stage-tab" data-stage="2" onclick="switchStage('${section.id}', 2, this)">
+          <span class="stage-dot"></span>Final stage — Independent delivery
+        </button>
+      </div>
+      ${buildStagePanel(section, 1)}
+      ${buildStagePanel(section, 2)}
+    `;
+    container.appendChild(card);
+  });
+  updateSummary();
+}
+
+function buildStagePanel(section, stage) {
+  const active = stage === 1 ? 'active' : '';
+  const headerClass = stage === 1 ? 's1' : 's2';
+  const headerText = stage === 1
+    ? 'Stage 1 — Supported session, mock call, recording review or shadowed client call'
+    : 'Final stage — Observed live call, recording review or final mock. Minimal/no prompting.';
+
+  let criteriaHTML = section.criteria.map((c, i) => `
+    <div class="criterion-row">
+      <div class="criterion-top">
+        <div class="criterion-question">
+          ${c.q}
+          <div class="what5">${c.w5}</div>
+        </div>
+        <div class="score-picker">
+          <label>Score /5</label>
+          <div class="score-buttons">
+            ${[1,2,3,4,5].map(n => `<button class="score-btn" data-score="${n}" onclick="selectScore('${section.id}', ${stage}, ${i}, ${n}, this)">${n}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="criterion-bottom">
+        <div class="criterion-field">
+          <label>Evidence / notes</label>
+          <textarea id="ev_${section.id}_s${stage}_${i}" placeholder="What did you observe?"></textarea>
+        </div>
+        <div class="criterion-field">
+          <label>Actions needed</label>
+          <textarea id="act_${section.id}_s${stage}_${i}" placeholder="Any follow-up required?"></textarea>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="stage-panel ${active}" id="panel_${section.id}_s${stage}">
+      <div class="stage-panel-header ${headerClass}">${headerText}</div>
+      <div class="criteria-list">${criteriaHTML}</div>
+      <div class="stage-summary">
+        <div class="summary-field">
+          <label>Average score</label>
+          <div class="avg-display" id="avg_${section.id}_s${stage}">—</div>
+        </div>
+        <div class="summary-field outcome-select">
+          <label>Outcome</label>
+          <select id="outcome_${section.id}_s${stage}" onchange="styleOutcome(this); updateSummary()">
+            <option value="">Select outcome</option>
+            <option value="Signed off">Signed off</option>
+            <option value="Revisit">Revisit</option>
+            <option value="Not yet">Not yet signed off</option>
+          </select>
+        </div>
+        <div class="summary-field">
+          <label>Date observed</label>
+          <input type="date" id="date_${section.id}_s${stage}" onchange="updateSummary()" style="border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:13px; font-family:inherit; background:white;" />
+        </div>
+        <div class="summary-field">
+          <label>Assessor</label>
+          <select id="stageassessor_${section.id}_s${stage}" style="border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:12px; font-family:inherit; background:white;">
+            <option value="">Select</option>
+            <option value="Amy">Amy</option>
+            <option value="Max">Max</option>
+          </select>
+        </div>
+      </div>
+      <div class="sign-off-fields">
+        <div class="field-group">
+          <label>Key strengths</label>
+          <textarea id="strengths_${section.id}_s${stage}" placeholder="What was done well?"></textarea>
+        </div>
+        <div class="field-group">
+          <label>Development actions</label>
+          <textarea id="devactions_${section.id}_s${stage}" placeholder="What needs to improve before final sign-off?"></textarea>
+        </div>
+        <div class="field-group" style="grid-column:1/-1;">
+          <label>Assessor final comments</label>
+          <textarea id="comments_${section.id}_s${stage}" placeholder="Overall summary for this stage..."></textarea>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Track scores
+const scores = {};
+CALL_SECTIONS.forEach(s => {
+  scores[s.id] = { 1: {}, 2: {} };
+});
+
+function selectScore(sectionId, stage, criterionIdx, score, btn) {
+  scores[sectionId][stage][criterionIdx] = score;
+  const row = btn.closest('.score-buttons');
+  row.querySelectorAll('.score-btn').forEach(b => {
+    b.className = 'score-btn';
+    if (parseInt(b.dataset.score) === score) b.classList.add(`selected-${score}`);
+  });
+  recalcAvg(sectionId, stage);
+  updateSummary();
+}
+
+function recalcAvg(sectionId, stage) {
+  const sectionScores = Object.values(scores[sectionId][stage]);
+  const el = document.getElementById(`avg_${sectionId}_s${stage}`);
+  if (sectionScores.length === 0) { el.textContent = '—'; el.className = 'avg-display'; return; }
+  const avg = sectionScores.reduce((a, b) => a + b, 0) / sectionScores.length;
+  el.textContent = avg.toFixed(1);
+  el.className = 'avg-display ' + (avg >= 4 ? 'good' : avg >= 3 ? 'warn' : 'bad');
+}
+
+function styleOutcome(sel) {
+  sel.className = 'outcome-select';
+  if (sel.value === 'Signed off') sel.classList.add('signed');
+  else if (sel.value === 'Revisit') sel.classList.add('revisit');
+  else if (sel.value === 'Not yet') sel.classList.add('notyet');
+}
+
+function switchStage(sectionId, stage, btn) {
+  const card = btn.closest('.card');
+  card.querySelectorAll('.stage-tab').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.stage-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`panel_${sectionId}_s${stage}`).classList.add('active');
+}
+
+function updateSummary() {
+  const tbody = document.getElementById('summaryBody');
+  tbody.innerHTML = '';
+  CALL_SECTIONS.forEach(section => {
+    const s1Outcome = document.getElementById(`outcome_${section.id}_s1`)?.value || '';
+    const s2Outcome = document.getElementById(`outcome_${section.id}_s2`)?.value || '';
+    const s1Date = document.getElementById(`date_${section.id}_s1`)?.value || '';
+    const s2Date = document.getElementById(`date_${section.id}_s2`)?.value || '';
+    const s2Avg = document.getElementById(`avg_${section.id}_s2`)?.textContent || '—';
+
+    const getBadge = (v) => {
+      if (!v) return '<span class="badge pending">—</span>';
+      if (v === 'Signed off') return `<span class="badge signed">✓ ${v}</span>`;
+      if (v === 'Revisit') return `<span class="badge revisit">⟳ ${v}</span>`;
+      return `<span class="badge notyet">✗ ${v}</span>`;
+    };
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="call-name">${section.title}</td>
+      <td style="font-size:12px; color:var(--muted);">${s1Date || '—'}</td>
+      <td>${getBadge(s1Outcome)}</td>
+      <td style="font-size:12px; color:var(--muted);">${s2Date || '—'}</td>
+      <td>${getBadge(s2Outcome)}</td>
+      <td style="font-weight:600;">${s2Avg}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function selectRec(btn, type) {
+  document.querySelectorAll('.rec-btn').forEach(b => b.className = 'rec-btn');
+  btn.classList.add(`selected-${type}`);
+  const labels = { signoff: 'Sign off', extend: 'Extend support', reassess: 'Reassess after further shadowing' };
+  document.getElementById('finalRecommendation').value = labels[type];
+}
+
+function collectFormData() {
+  const data = {
+    starterName: document.getElementById('starterName').value,
+    assessor: document.getElementById('assessor').value,
+    checkpoint: document.getElementById('checkpoint').value,
+    callType: document.getElementById('callTypeHeader').value,
+    clientScenario: document.getElementById('clientScenario').value,
+    recordingLink: document.getElementById('recordingLink').value,
+    finalRecommendation: document.getElementById('finalRecommendation').value,
+    overallComments: document.getElementById('overallComments').value,
+    supportPlan: document.getElementById('supportPlan').value,
+    finalReviewDate: document.getElementById('finalReviewDate').value,
+    sections: []
+  };
+
+  CALL_SECTIONS.forEach(section => {
+    const sectionData = { id: section.id, title: section.title, stages: {} };
+    [1, 2].forEach(stage => {
+      const avgEl = document.getElementById(`avg_${section.id}_s${stage}`);
+      const stageData = {
+        date: document.getElementById(`date_${section.id}_s${stage}`)?.value || '',
+        outcome: document.getElementById(`outcome_${section.id}_s${stage}`)?.value || '',
+        assessor: document.getElementById(`stageassessor_${section.id}_s${stage}`)?.value || '',
+        avg: avgEl?.textContent || '—',
+        strengths: document.getElementById(`strengths_${section.id}_s${stage}`)?.value || '',
+        devActions: document.getElementById(`devactions_${section.id}_s${stage}`)?.value || '',
+        comments: document.getElementById(`comments_${section.id}_s${stage}`)?.value || '',
+        criteria: section.criteria.map((c, i) => ({
+          question: c.q,
+          score: scores[section.id][stage][i] || '',
+          evidence: document.getElementById(`ev_${section.id}_s${stage}_${i}`)?.value || '',
+          actions: document.getElementById(`act_${section.id}_s${stage}_${i}`)?.value || ''
+        }))
+      };
+      sectionData.stages[stage] = stageData;
+    });
+    data.sections.push(sectionData);
+  });
+  return data;
+}
+
+async function submitToAppsScript() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) {
+    showStatus('Please enter your Apps Script URL in the setup section at the top.', 'error');
+    return;
+  }
+  const data = collectFormData();
+  if (!data.starterName) {
+    showStatus('Please enter the new starter name before saving.', 'error');
+    return;
+  }
+  showStatus('Saving to Sheets and generating Word doc...', 'info');
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveAssessment', data }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const result = await resp.json();
+    if (result.success) {
+      showStatus('✓ Saved to Sheets! ' + (result.docUrl ? `<a href="${result.docUrl}" target="_blank" style="color:var(--pass); font-weight:600;">Download Word doc →</a>` : ''), 'success');
+    } else {
+      showStatus('Error: ' + (result.error || 'Unknown error from Apps Script.'), 'error');
+    }
+  } catch (e) {
+    showStatus('Could not connect to Apps Script. Check your URL and that the deployment is set to "Anyone".', 'error');
+  }
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('statusMsg');
+  el.innerHTML = msg;
+  el.className = `status-msg ${type}`;
+  el.style.display = 'block';
+  if (type !== 'info') setTimeout(() => { el.style.display = 'none'; }, 8000);
+}
+
+function printForm() { window.print(); }
+
+function clearForm() {
+  if (!confirm('Clear all form data? This cannot be undone.')) return;
+  document.querySelectorAll('input:not([type=hidden]), textarea, select').forEach(el => {
+    if (el.type === 'checkbox') el.checked = false;
+    else el.value = '';
+    if (el.tagName === 'SELECT') el.className = el.className.replace(/signed|revisit|notyet/g, '').trim();
+  });
+  CALL_SECTIONS.forEach(s => { scores[s.id] = { 1: {}, 2: {} }; });
+  document.querySelectorAll('.score-btn').forEach(b => b.className = 'score-btn');
+  document.querySelectorAll('.avg-display').forEach(el => { el.textContent = '—'; el.className = 'avg-display'; });
+  document.querySelectorAll('.rec-btn').forEach(b => b.className = 'rec-btn');
+  updateSummary();
+}
+
+// Load saved script URL
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('streetScriptUrl');
+  if (saved) {
+    document.getElementById('scriptUrl').value = saved;
+    document.getElementById('setup-card').style.display = 'none';
+  }
+  document.getElementById('scriptUrl').addEventListener('change', e => {
+    localStorage.setItem('streetScriptUrl', e.target.value);
+  });
+  buildSections();
+});
+</script>
+</body>
+</html>
