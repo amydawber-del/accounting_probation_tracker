@@ -998,18 +998,22 @@ async function submitToAppsScript() {
     showStatus('Please enter the new starter name before saving.', 'error');
     return;
   }
-  showStatus('Saving to Sheets and generating Word doc — this may take a few seconds...', 'info');
+  showStatus('Saving — this may take a few seconds…', 'info');
   try {
-    const formBody = 'payload=' + encodeURIComponent(JSON.stringify({ action: 'saveAssessment', data }));
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formBody
-    });
-    showStatus('✓ Submitted! Check your Google Sheet and Drive folder for the record and Word doc. <a href="https://drive.google.com" target="_blank" style="color:var(--pass); font-weight:600;">Open Drive →</a>', 'success');
+    // Use GET + URL params: avoids all CORS preflight issues with Apps Script
+    const payload = encodeURIComponent(JSON.stringify({ action: 'saveAssessment', data }));
+    const getUrl = url + '?payload=' + payload;
+    const resp = await fetch(getUrl, { method: 'GET', mode: 'cors' });
+    const result = await resp.json();
+    if (result.success) {
+      let msg = '✓ Saved to Google Sheet!';
+      if (result.sheetUrl) msg += ' &nbsp;<a href="' + result.sheetUrl + '" target="_blank" style="color:var(--pass);font-weight:600;">View Sheet →</a>';
+      showStatus(msg, 'success');
+    } else {
+      showStatus('Apps Script error: ' + (result.error || 'Unknown error. Check the Apps Script logs.'), 'error');
+    }
   } catch (e) {
-    showStatus('Could not reach Apps Script. Check the URL is correct and deployed as "Anyone".', 'error');
+    showStatus('Could not reach Apps Script (' + e.message + '). Make sure it is deployed as Execute: Me, Access: Anyone.', 'error');
   }
 }
 
