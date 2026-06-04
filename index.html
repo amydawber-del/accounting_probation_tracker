@@ -1042,11 +1042,10 @@ function clearForm() {
 
 // Load saved script URL
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('streetScriptUrl');
-  if (saved) {
-    document.getElementById('scriptUrl').value = saved;
-    document.getElementById('setup-card').style.display = 'none';
-  }
+  const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwTGYyxJxMvD69HnKlFRX9AsHkw1-xHvbYEkSaMsmK-XEjX-TeUqNEl0nfdOyp9T87r/exec';
+  const saved = localStorage.getItem('streetScriptUrl') || DEFAULT_URL;
+  document.getElementById('scriptUrl').value = saved;
+  document.getElementById('setup-card').style.display = 'none';
   document.getElementById('scriptUrl').addEventListener('change', e => {
     localStorage.setItem('streetScriptUrl', e.target.value);
   });
